@@ -39,9 +39,10 @@ const publishCast = async (msg: string) => {
   }
 };
 
-// Initial call to publish a motivational message.
+// Initial cast
 publishCast(
-  `gm! I'm here to brighten your day with daily cheer. Look forward to a warm 'gm' everyday!`
+  `gm! I bring updates of farcaster users' usage of fully decentralized domains (via ens!). Look 
+  forward to updates of popular farcaster accounts that switch their original fnames to a .eth name!`
 );
 
 // Extracting hour and minute from the PUBLISH_CAST_TIME configuration.
