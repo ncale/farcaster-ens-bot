@@ -39,6 +39,19 @@ const publishCast = async (msg: string) => {
   }
 };
 
+// Function for creating and returning the cast message with the usernames in question
+const createMessage = (prevUsername: string, newUsername: string) => {
+  return `@${prevUsername} has changed their username to ${newUsername}!`;
+};
+
+// Function for casting the announcement
+const castMessage = (prevUsername: string, newUsername: string) => {
+  const message = createMessage(prevUsername, newUsername);
+  publishCast(message);
+};
+
+
+
 // Initial cast
 publishCast(
   `gm! I bring updates of farcaster users' usage of fully decentralized domains (via ens!). Look 
