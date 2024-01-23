@@ -1,8 +1,8 @@
-# gm_bot
+# Farcaster ENS Bot
 
 ## Introduction
 
-`gm_bot` is an automated messaging bot designed to cast a 'gm 🪐' message in Warpcast every day at a scheduled time. The bot operates continuously as long as the system remains online. It leverages [Neynar API](https://docs.neynar.com/) and is built using [@neynar/nodejs-sdk](https://www.npmjs.com/package/@neynar/nodejs-sdk).
+The Farcaster ENS Bot @...WIP... casts anytime a popular Farcaster user switches their Farcaster username from their default fname to an owned '.eth' name. More about Farcaster usernames [here](https://docs.farcaster.xyz/learn/what-is-farcaster/usernames). This bot leverages [Neynar API](https://docs.neynar.com/) and is built using [@neynar/nodejs-sdk](https://www.npmjs.com/package/@neynar/nodejs-sdk).
 
 ## Prerequisites
 
