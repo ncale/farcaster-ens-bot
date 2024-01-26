@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import { MESSAGE } from "./utils";
 import neynarClient from "./neynarClient";
+import duneClient from "./duneClient";
 import {
   PUBLISH_CAST_TIME,
   SIGNER_UUID,
