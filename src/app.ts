@@ -18,9 +18,11 @@ if (!FARCASTER_BOT_MNEMONIC) {
 if (!SIGNER_UUID) {
   throw new Error("SIGNER_UUID is not defined");
 }
-
 if (!NEYNAR_API_KEY) {
   throw new Error("NEYNAR_API_KEY is not defined");
+}
+if (!DUNE_API_KEY) {
+  throw new Error("DUNE_API_KEY is not defined");
 }
 
 /**
