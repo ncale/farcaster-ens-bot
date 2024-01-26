@@ -11,6 +11,9 @@ import {
 } from "./config";
 import { isApiErrorResponse } from "@neynar/nodejs-sdk";
 
+// Assign Dune query ID
+const QUERY_ID = 123; // <- temp query ID; need to replace with real query
+
 // Validating necessary environment variables or configurations.
 if (!FARCASTER_BOT_MNEMONIC) {
   throw new Error("FARCASTER_BOT_MNEMONIC is not defined");
@@ -60,6 +63,27 @@ publishCast(
   `gm! I bring updates of farcaster users' usage of fully decentralized domains (via ens!). Look 
   forward to updates of popular farcaster accounts that switch their original fnames to a .eth name!`
 );
+
+/**
+ * The Dune data should look as follows:
+ * [
+ *  {
+ *    fid: (ex...) 20513: int,
+ *    username: (ex...) sandman.eth: string,
+ *    numFollowers: (ex...) 30000: int,
+ *  },
+ * ]
+ */
+
+// initialize query variable
+let newData;
+
+// refresh query of top 300 followed .eth name accounts
+duneClient
+  .refresh(QUERY_ID)
+  .then((executionResult) => {
+    newData = executionResult.result?.rows
+});
 
 // Extracting hour and minute from the PUBLISH_CAST_TIME configuration.
 const [hour, minute] = PUBLISH_CAST_TIME.split(":");
