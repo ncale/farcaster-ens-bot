@@ -6,6 +6,7 @@ import {
   SIGNER_UUID,
   TIME_ZONE,
   NEYNAR_API_KEY,
+  DUNE_API_KEY,
   FARCASTER_BOT_MNEMONIC,
 } from "./config";
 import { isApiErrorResponse } from "@neynar/nodejs-sdk";
