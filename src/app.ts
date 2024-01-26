@@ -67,6 +67,19 @@ const castMessage = (prevUsername: string, newUsername: string) => {
 
 
 
+
+const cronScheduleFunction = () => {
+  // Get query results
+  const newData = getQueryResults();
+  // Check who is new
+
+  // Create a message for them
+
+  // Cast message
+  castMessage("old uname", "new uname"); // <- need to replace 
+};
+
+
 // Initial cast
 publishCast(
   `gm! I bring updates of farcaster users' usage of fully decentralized domains (via ens!). Look 
@@ -79,9 +92,7 @@ const [hour, minute] = PUBLISH_CAST_TIME.split(":");
 // Scheduling a cron job to publish a message at a specific time every day.
 cron.schedule(
   `${minute} ${hour} * * *`, // Cron time format
-  function () {
-    const newData = getQueryResults();
-  },
+  cronScheduleFunction,
   {
     scheduled: true, // Ensure the job is scheduled.
     timezone: TIME_ZONE, // Set the timezone for the schedule.
