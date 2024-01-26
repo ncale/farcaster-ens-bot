@@ -10,9 +10,6 @@ import * as fs from "fs";
 import * as path from "path";
 import { isApiErrorResponse } from "@neynar/nodejs-sdk";
 
-// A constant message for greeting or logging.
-export const MESSAGE = `gm 🪐`;
-
 /**
  * Appends the signer_uuid to the .env file.
  * @param signer_uuid - Approved signer UUID of the user.
