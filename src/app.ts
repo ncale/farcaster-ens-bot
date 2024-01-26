@@ -12,7 +12,7 @@ import {
 import { isApiErrorResponse } from "@neynar/nodejs-sdk";
 
 // Assign Dune query ID
-const QUERY_ID = 123; // <- temp query ID; need to replace with real query
+const QUERY_ID = 3380826; // <- temp query ID; need to replace with real query
 
 // Validating necessary environment variables or configurations.
 if (!FARCASTER_BOT_MNEMONIC) {
