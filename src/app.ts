@@ -73,21 +73,6 @@ publishCast(
   forward to updates of popular farcaster accounts that switch their original fnames to a .eth name!`
 );
 
-/**
- * The Dune data should look as follows:
- * [
-  *  {
- *    fid: (ex...) 20513: int,
- *    username: (ex...) sandman.eth: string,
- *    numFollowers: (ex...) 30000: int,
- *  },
- * ]
- */
-
-
-
-
-
 // Extracting hour and minute from the PUBLISH_CAST_TIME configuration.
 const [hour, minute] = PUBLISH_CAST_TIME.split(":");
 
