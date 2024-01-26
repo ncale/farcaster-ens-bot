@@ -45,6 +45,15 @@ const publishCast = async (msg: string) => {
   }
 };
 
+// Function to refresh Dune query
+const getQueryResults = () => {
+  duneClient
+    .refresh(QUERY_ID)
+    .then((executionResult) => {
+      return executionResult.result?.rows
+    });
+}
+
 // Function for creating and returning the cast message with the usernames in question
 const createMessage = (prevUsername: string, newUsername: string) => {
   return `@${prevUsername} has changed their username to ${newUsername}!`;
@@ -67,7 +76,7 @@ publishCast(
 /**
  * The Dune data should look as follows:
  * [
- *  {
+  *  {
  *    fid: (ex...) 20513: int,
  *    username: (ex...) sandman.eth: string,
  *    numFollowers: (ex...) 30000: int,
@@ -75,15 +84,9 @@ publishCast(
  * ]
  */
 
-// initialize query variable
-let newData;
 
-// refresh query of top 300 followed .eth name accounts
-duneClient
-  .refresh(QUERY_ID)
-  .then((executionResult) => {
-    newData = executionResult.result?.rows
-});
+
+
 
 // Extracting hour and minute from the PUBLISH_CAST_TIME configuration.
 const [hour, minute] = PUBLISH_CAST_TIME.split(":");
@@ -92,7 +95,7 @@ const [hour, minute] = PUBLISH_CAST_TIME.split(":");
 cron.schedule(
   `${minute} ${hour} * * *`, // Cron time format
   function () {
-    publishCast(MESSAGE); // Function to execute at the scheduled time.
+    const newData = getQueryResults();
   },
   {
     scheduled: true, // Ensure the job is scheduled.
