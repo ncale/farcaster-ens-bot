@@ -12,8 +12,8 @@ import {
 import { isApiErrorResponse } from "@neynar/nodejs-sdk";
 
 // Assign Dune query ID
-const CURRENT_LEADERBOARD_QUERY_ID = 3380826;
-const YESTERDAY_LEADERBOARD_QUERY_ID = 3380826;
+const CURRENT_LEADERBOARD_QUERY_ID = 3383049;
+const YESTERDAY_LEADERBOARD_QUERY_ID = 3383026;
 
 // Validating necessary environment variables or configurations.
 if (!FARCASTER_BOT_MNEMONIC) {
