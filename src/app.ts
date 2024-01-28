@@ -46,15 +46,6 @@ const publishCast = async (msg: string) => {
   }
 };
 
-// Function to refresh Dune query
-const getQueryResults = (query_id) => {
-  duneClient
-    .refresh(query_id)
-    .then((executionResult) => {
-      return executionResult.result?.rows
-    });
-}
-
 // Function for creating and returning the cast message with the usernames in question
 const createMessage = (prevUsername: string, newUsername: string) => {
   return `@${prevUsername} has changed their username to ${newUsername}!`;
@@ -69,16 +60,26 @@ const castMessage = (prevUsername: string, newUsername: string) => {
 
 
 
-const oldData: Array<object>;
+let oldData: Array<object>;
 
 const cronScheduleFunction = () => {
   // If first time running, then query dune for leaderboard and return tomorrow
   if (!oldData) {
-    const oldData = getQueryResults(CURRENT_LEADERBOARD_QUERY_ID);
+    duneClient
+      .refresh(CURRENT_LEADERBOARD_QUERY_ID)
+      .then((executionResult) => {
+        let oldData = executionResult.result?.rows;
+      })
+      .catch((err) => {console.log(err)})
     return;
   }
-  // Get query results
-  const newData = getQueryResults();
+  // Get yesterday's query results
+  duneClient
+    .refresh(YESTERDAY_LEADERBOARD_QUERY_ID)
+    .then((executionResult) => {
+      let newData = executionResult.result?.rows;
+    })
+    .catch((err) => {console.log(err)})
   // Check who is new
 
   // Create a message for them
