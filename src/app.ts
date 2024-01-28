@@ -61,6 +61,31 @@ const castMessage = (prevUsername: string, newUsername: string) => {
 
 
 
+
+/**
+ * oldData format:
+ * [
+ *  {
+ *    fid:
+ *    username:
+ *    total_followers:
+ *  }
+ * ]
+ */
+
+
+/**
+ * oldDataChecker format:
+ * [
+ *  {
+ *    fid:
+ *    username:
+ *  }
+ * ]
+ */
+
+
+
 let oldData: Array<object>;
 
 const cronScheduleFunction = async () => {
