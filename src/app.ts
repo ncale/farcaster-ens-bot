@@ -73,14 +73,32 @@ const cronScheduleFunction = async() => {
       .catch((err) => {console.log(err)})
     return;
   }
-  // Get yesterday's query results
+
+  // Get query results of yesterday's top 150 with their current usernames
   await duneClient
     .refresh(YESTERDAY_LEADERBOARD_QUERY_ID)
     .then((executionResult) => {
-      let newData = executionResult.result?.rows;
+      let oldDataChecker = executionResult.result?.rows;
     })
     .catch((err) => {console.log(err)})
-  // Check who is new
+
+  // Unpack the fids of the yesterday's top 150 users into an array
+  let newUserFids: Array<string>
+  await oldDataChecker.forEach((record) => {newUserFids.push(record.fid)})
+
+  // Check which usernames are different and save to the differingUsers array
+  let differingUsernameUsers: Array<object>
+  oldData.forEach((record, i) => {
+    if (newUserFids.includes(record.fid)) {
+      if (record.username != newData[i].username) {
+        differingUsers.push(record);
+      }) else {
+        break;
+      }
+    } else {
+      console.log("query bug - the historical query doesn't return the same list of users as the current time query");
+    };
+  });
 
   // Create a message for them
 
