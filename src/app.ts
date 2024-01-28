@@ -46,9 +46,9 @@ const publishCast = async (msg: string) => {
 };
 
 // Function to refresh Dune query
-const getQueryResults = () => {
+const getQueryResults = (query_id) => {
   duneClient
-    .refresh(QUERY_ID)
+    .refresh(query_id)
     .then((executionResult) => {
       return executionResult.result?.rows
     });
