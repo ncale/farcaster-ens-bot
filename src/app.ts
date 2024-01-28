@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import neynarClient from "./neynarClient";
 import duneClient from "./duneClient";
+import { QueryParameter } from "@cowprotocol/ts-dune-client";
 import {
   PUBLISH_CAST_TIME,
   SIGNER_UUID,
@@ -74,9 +75,21 @@ const cronScheduleFunction = async () => {
     return;
   }
 
-  // Get query results of yesterday's top 150 with their current usernames
+  // Create a string of yesterday's top FIDs in a postgres list format to be passed to dune as a parameter
+  let fidList = "(";
+  oldData.forEach((record) => {
+    fidList += `${record.fid}, `;
+  });
+  fidList += ")";
+
+  // Put parameter into cowprotocol dune client format
+  const parameters = [
+    QueryParameter.text("fid_list_parameter", fidList)
+  ];
+
+  // Using those FIDs, query their current usernames
   await duneClient
-    .refresh(YESTERDAY_LEADERBOARD_QUERY_ID)
+    .refresh(USERNAME_LOOKUP_QUERY_ID, parameters)
     .then((executionResult) => {
       let oldDataChecker = executionResult.result?.rows;
     })
