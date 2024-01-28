@@ -120,22 +120,13 @@ const cronScheduleFunction = async () => {
     })
     .catch((err) => {console.log(err)})
 
-  // Unpack the fids of the yesterday's top 150 users into an array
-  let yesterdaysUserFids: Array<string>
-  await oldDataChecker.forEach((record) => {yesterdaysUserFids.push(record.fid)})
-
-  // Check which usernames are different and save to the differingUsers array
-  // let differingUsernameUsers: Array<object>
+  // Check which usernames are different ... this code will not work if Dune / postgres rearranges the returned query order
+  let differingUsernameUsers: Array<object>
   oldData.forEach((record, i) => {
-    // Check if user fid is in the new set
-    if (yesterdaysUserFids.includes(record.fid)) {
-      // Check if the username is the same
-      if (record.username != oldDataChecker[i].username) {
-        
-      }
-      differingUsers.push(record);
-      record.username == newData[i].username
-    };
+    // Check if the username is the same. If not, save to var
+    if (record.username != oldDataChecker[i].username) {
+      differingUsernameUsers.push({prevUsername: record.username, newUsername: oldDataChecker[i].username})
+    }
   });
 
   // Create a message for the differing users
