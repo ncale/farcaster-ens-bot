@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A bot that will cast a 'gm 🪐' message in Warpcast at scheduled time everyday (As long as system is online)",
   "main": "./dist/app.js",
+  "type": "module",
   "scripts": {
     "watch": "tsc --watch",
     "build": "rm -rf dist && tsc",
