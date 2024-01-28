@@ -49,10 +49,10 @@ const publishCast = async (msg: string) => {
 
 // Function for creating and returning the cast message with the usernames in question
 const createMessage = (unameList: Array<object>) => {
-  let message = `${x} new username${/*if x is more than 1, put an "s have" here vs " has"*/} joined the .eth family!\n`
+  let message = `${unameList.length} new username${unameList.length > 1 ? "s have" : " has"} joined the .eth family!\n`;
   unameList.forEach((unames: object) => {
     message += `@${unames.prevUsername} changed to ${unames.newUsername}!\n`
-  };  
+  });  
 };
 
 
@@ -128,7 +128,9 @@ const cronScheduleFunction = async () => {
   });
 
   // Create a message for the differing users - 320 total characters per cast
-  
+  if (differingUsernameUsers.length > 0) {
+    createMessage(differingUsernameUsers);
+  }
 
   // Cast message
   castMessage("old uname", "new uname"); // <- need to replace 
