@@ -12,7 +12,8 @@ import {
 import { isApiErrorResponse } from "@neynar/nodejs-sdk";
 
 // Assign Dune query ID
-const QUERY_ID = 3380826; // <- temp query ID; need to replace with real query
+const CURRENT_LEADERBOARD_QUERY_ID = 3380826;
+const YESTERDAY_LEADERBOARD_QUERY_ID = 3380826;
 
 // Validating necessary environment variables or configurations.
 if (!FARCASTER_BOT_MNEMONIC) {
@@ -68,7 +69,14 @@ const castMessage = (prevUsername: string, newUsername: string) => {
 
 
 
+const oldData: Array<object>;
+
 const cronScheduleFunction = () => {
+  // If first time running, then query dune for leaderboard and return tomorrow
+  if (!oldData) {
+    const oldData = getQueryResults(CURRENT_LEADERBOARD_QUERY_ID);
+    return;
+  }
   // Get query results
   const newData = getQueryResults();
   // Check who is new
