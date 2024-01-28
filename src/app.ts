@@ -62,7 +62,7 @@ const castMessage = (prevUsername: string, newUsername: string) => {
 
 let oldData: Array<object>;
 
-const cronScheduleFunction = () => {
+const cronScheduleFunction = async() => {
   // If first time running, then query dune for leaderboard and return tomorrow
   if (!oldData) {
     duneClient
@@ -74,7 +74,7 @@ const cronScheduleFunction = () => {
     return;
   }
   // Get yesterday's query results
-  duneClient
+  await duneClient
     .refresh(YESTERDAY_LEADERBOARD_QUERY_ID)
     .then((executionResult) => {
       let newData = executionResult.result?.rows;
