@@ -87,7 +87,7 @@ const cronScheduleFunction = async () => {
     QueryParameter.text("fid_list_parameter", fidList)
   ];
 
-  // Using those FIDs, query their current usernames
+  // Using that parameter, query their current usernames
   await duneClient
     .refresh(USERNAME_LOOKUP_QUERY_ID, parameters)
     .then((executionResult) => {
