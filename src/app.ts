@@ -62,8 +62,8 @@ const castMessage = (prevUsername: string, newUsername: string) => {
 
 let oldData: Array<object>;
 
-const cronScheduleFunction = async() => {
-  // If first time running, then query dune for leaderboard and return tomorrow
+const cronScheduleFunction = async () => {
+  // If first time running, then query dune for the current leaderboard and return tomorrow
   if (!oldData) {
     duneClient
       .refresh(CURRENT_LEADERBOARD_QUERY_ID)
@@ -83,24 +83,25 @@ const cronScheduleFunction = async() => {
     .catch((err) => {console.log(err)})
 
   // Unpack the fids of the yesterday's top 150 users into an array
-  let newUserFids: Array<string>
-  await oldDataChecker.forEach((record) => {newUserFids.push(record.fid)})
+  let yesterdaysUserFids: Array<string>
+  await oldDataChecker.forEach((record) => {yesterdaysUserFids.push(record.fid)})
 
   // Check which usernames are different and save to the differingUsers array
-  let differingUsernameUsers: Array<object>
+  // let differingUsernameUsers: Array<object>
   oldData.forEach((record, i) => {
-    if (newUserFids.includes(record.fid)) {
-      if (record.username != newData[i].username) {
-        differingUsers.push(record);
-      }) else {
-        break;
+    // Check if user fid is in the new set
+    if (yesterdaysUserFids.includes(record.fid)) {
+      // Check if the username is the same
+      if (record.username != oldDataChecker[i].username) {
+        
       }
-    } else {
-      console.log("query bug - the historical query doesn't return the same list of users as the current time query");
+      differingUsers.push(record);
+      record.username == newData[i].username
     };
   });
 
-  // Create a message for them
+  // Create a message for the differing users
+
 
   // Cast message
   castMessage("old uname", "new uname"); // <- need to replace 
