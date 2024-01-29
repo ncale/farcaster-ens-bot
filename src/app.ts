@@ -106,24 +106,24 @@ const createMessages = (userList: Array<object>) => {
 
 
 
-let oldData: Array<object>;
+let leaderboardData: Array<object> = [];
 
 const cronScheduleFunction = async () => {
   // If first time running, then query dune for the current leaderboard and return tomorrow
-  if (!oldData) {
-    duneClient
+  if (!leaderboardData) {
+    await duneClient
       .refresh(CURRENT_LEADERBOARD_QUERY_ID)
       .then((executionResult) => {
-        let oldData = executionResult.result?.rows;
+        leaderboardData = executionResult.result?.rows;
       })
       .catch((err) => {console.log(err)})
     return;
   }
 
-  // Create a string of yesterday's top FIDs in a postgres list format to be passed to dune as a parameter
+  // Create a string of FIDs in a list format (ex. '(x, y, z)') to be passed to dune as a parameter
   let fidList = "(";
-  oldData.forEach((record) => {
-    fidList += `${record.fid}, `;
+  leaderboardData.forEach((user) => {
+    fidList += `${user.fid}, `;
   });
   fidList += ")";
 
@@ -132,29 +132,27 @@ const cronScheduleFunction = async () => {
     QueryParameter.text("fid_list_parameter", fidList)
   ];
 
-  // Using that parameter, query their current usernames
+  // Using that parameter, query the current usernames
   await duneClient
     .refresh(USERNAME_LOOKUP_QUERY_ID, parameters)
     .then((executionResult) => {
-      let oldDataChecker = executionResult.result?.rows;
+      let updatedUsernames = executionResult.result?.rows;
     })
     .catch((err) => {console.log(err)})
 
   // Check which usernames are different ... this code will not work if Dune / postgres rearranges the returned query order
-  let differingUsernameUsers: Array<object>
-  oldData.forEach((record, i) => {
+  let differingUsernameUsers: Array<object> = [];
+  leaderboardData.forEach((user, i) => {
     // Check if the username is the same. If not, save to var
-    if (record.username != oldDataChecker[i].username) {
-      differingUsernameUsers.push({prevUsername: record.username, newUsername: oldDataChecker[i].username})
+    if (user.username != updatedUsernames[i].username) {
+      differingUsernameUsers.push({prevUsername: user.username, newUsername: updatedUsernames[i].username})
     }
   });
 
   // Create and cast messages
   if (differingUsernameUsers.length > 0) {
-
     // Create a list of messages containing the usernames - 320 total characters per cast
     const messages = createMessages(differingUsernameUsers);
-
     // Cast the messages
     publishCast(messages[0])
     if (messages.length > 1) {
@@ -168,7 +166,7 @@ const cronScheduleFunction = async () => {
   await duneClient
     .refresh(CURRENT_LEADERBOARD_QUERY_ID)
     .then((executionResult) => {
-      let oldData = executionResult.result?.rows;
+      let leaderboardData = executionResult.result?.rows;
     })
     .catch((err) => {console.log(err)})
   return;
