@@ -40,14 +40,12 @@ if (!DUNE_API_KEY) {
 const queryDune = async (queryID: number, parameters: QueryParameter[] = []) => {
   try {
     if (parameters) {
-      return await duneClient
-        .refresh(queryID, parameters)
-        .then((executionResult) => executionResult.result?.rows)
+      let executionResult = await duneClient.refresh(queryID, parameters);
+      return executionResult.result?.rows;
     } else {
-      return await duneClient
-        .refresh(queryID)
-        .then((executionResult) => executionResult.result?.rows)
-    }
+      let executionResult = await duneClient.refresh(queryID);
+      return executionResult.result?.rows;
+    };
   } catch (err) {
     console.log(err);
   }
@@ -63,17 +61,11 @@ const publishCast = async (msg: string, replyHash: string = "") => {
   try {
     // Using the neynarClient to publish the cast.
     if (replyHash) {
-      await neynarClient
-        .publishCast(SIGNER_UUID, msg, {replyTo: replyHash})
-        .then(response => {
-          console.log("Published Cast:", response);
-        });
+      let response = await neynarClient.publishCast(SIGNER_UUID, msg, {replyTo: replyHash});
+      console.log("Published Cast:", response);
     } else {
-      await neynarClient
-        .publishCast(SIGNER_UUID, msg)
-        .then(response => {
-          console.log("Published Cast:", response);
-        });
+      let response = await neynarClient.publishCast(SIGNER_UUID, msg);
+      console.log("Published Cast:", response);
     };
     console.log("Cast published successfully");
   } catch (err) {
@@ -130,7 +122,7 @@ let leaderboardData: User[];
 const cronScheduleFunction = async () => {
   // If first time running, then query dune for the current leaderboard and return tomorrow
   if (!leaderboardData) {
-    leaderboardData = queryDune(CURRENT_LEADERBOARD_QUERY_ID);
+    let leaderboardData = await queryDune(CURRENT_LEADERBOARD_QUERY_ID);
     return;
   }
 
@@ -147,7 +139,7 @@ const cronScheduleFunction = async () => {
   ];
 
   // Using that parameter, query the current usernames
-  let updatedUsernames: User[] = queryDune(USERNAME_LOOKUP_QUERY_ID, parameters);
+  let updatedUsernames: User[] = await queryDune(USERNAME_LOOKUP_QUERY_ID, parameters);
 
   // Check which usernames are different ... this code will not work if Dune / postgres rearranges the returned query order
   let differingUsernames: UsernameHistory[];
@@ -163,17 +155,17 @@ const cronScheduleFunction = async () => {
     // Create a list of messages containing the usernames - 320 total characters per cast
     const messages = createMessages(differingUsernames);
     // Cast the messages
-    await publishCast(messages[0])
+    let response = await publishCast(messages[0])
           // <- need to get the hash of the original cast so it can reply here if needed
     if (messages.length > 1) {
       messages.forEach((message: string): void => {
-        publishCast(message) // this function needs to reply to the one previous
+        let response = await publishCast(message) // this function needs to reply to the one previous
       });
     }
   }
 
   // Retrieve the current leaderboard for use tomorrow
-  leaderboardData = queryDune(CURRENT_LEADERBOARD_QUERY_ID);
+  let leaderboardData = await queryDune(CURRENT_LEADERBOARD_QUERY_ID);
 };
 
 
