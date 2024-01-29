@@ -133,13 +133,20 @@ const cronScheduleFunction = async () => {
     }
   });
 
-  // Create a message for the differing users - 320 total characters per cast
+  // Create and cast messages
   if (differingUsernameUsers.length > 0) {
+    
+    // Create a list of messages containing the usernames - 320 total characters per cast
     const messages = createMessages(differingUsernameUsers);
-  }
 
-  // Cast message
-  castMessage("old uname", "new uname"); // <- need to replace 
+    // Cast the messages
+    publishCast(messages[0])
+    if (messages.length > 1) {
+      messages.forEach((message) => {
+        publishCast(message) // this function needs to reply to the one previous
+      });
+    }
+  }
 };
 
 
