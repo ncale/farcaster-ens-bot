@@ -67,11 +67,12 @@ const createMessages = (userList: UsernameHistory[]): string[] => {
   const createUsernameChangeText = (prevU: string, newU: string): string => {return `@${prevU} changed to ${newU}\n`}; // 15 chars w/out usernames
   // Write a line for each user in the list
   userList.forEach((usernames: UsernameHistory): void => {
-    // If the line will push the message char count past Farcaster's limit of 320, push it to a new cast
-    if ((usernames.prevUsername.length + usernames.newUsername.length + 15) < (320 - messages[messages.length-1].length)) {
-      messages[messages.length-1] += createUsernameChangeText(usernames.prevUsername, usernames.newUsername)
+    // If the line makes the message char count greater than 320 (Farcaster's limit), then it will push to a new cast
+    let lineText: string = createUsernameChangeText(usernames.prevUsername, usernames.newUsername)
+    if ((messages[messages.length-1].length + lineText.length) < 320) {
+      messages[messages.length-1] += lineText;
     } else {
-      messages.push(createUsernameChangeText(usernames.prevUsername, usernames.newUsername));
+      messages.push(lineText);
     };
   });
   return messages;
