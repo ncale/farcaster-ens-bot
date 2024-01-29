@@ -12,9 +12,11 @@ import {
 } from "./config";
 import { isApiErrorResponse } from "@neynar/nodejs-sdk";
 
-// Assign Dune query ID
+
+// Assign Dune query IDs
 const CURRENT_LEADERBOARD_QUERY_ID = 3383049;
 const USERNAME_LOOKUP_QUERY_ID = 3386538;
+
 
 // Validating necessary environment variables or configurations.
 if (!FARCASTER_BOT_MNEMONIC) {
@@ -29,6 +31,7 @@ if (!NEYNAR_API_KEY) {
 if (!DUNE_API_KEY) {
   throw new Error("DUNE_API_KEY is not defined");
 }
+
 
 /**
  * Function to publish a message (cast) using neynarClient.
@@ -47,15 +50,26 @@ const publishCast = async (msg: string) => {
   }
 };
 
-// Function for creating and returning the cast message with the usernames in question
-const createMessages = (unameList: Array<object>) => {
+
+/**
+ * Function to create and return a list of messages. The number of messages depends on how many users change their username, so as not to exceed the Farcaster char limit.
+ * @param userList - The array of usernames. Each item is an object containing prevUsername and newUsername
+ * @returns 
+ */
+const createMessages = (userList: Array<object>) => {
+  // Initialize messages array
   let messages: string[];
-  messages.push(`${unameList.length} new username${unameList.length > 1 ? "s have" : " has"} joined the .eth family!\n`); // 44-47 chars ; 39 plain text, 4-6 changing language, 1-2 num chars
-  unameList.forEach((unames: object) => {
-    if (unames.prevUsername.length + unames.newUsername.length < (320 - messages[messages.length-1].length)) {
-      messages[messages.length-1] += `@${unames.prevUsername} changed to ${unames.newUsername}\n` // 15 chars w/out usernames
+  // Write first line
+  messages.push(`${userList.length} new username${userList.length > 1 ? "s have" : " has"} joined the .eth family!\n`); // 44-47 chars ; 39 plain text, 4-6 changing language, 1-2 num chars
+  // Function to create the username change string
+  const createUsernameChangeText = (prevU: string, newU: string) => {return `@${prevU} changed to ${newU}\n`};
+  // Write a line for each user in the list
+  userList.forEach((usernames: object) => {
+    // If the line will push the message char count past Farcaster's limit of 320, push it to a new cast
+    if (usernames.prevUsername.length + usernames.newUsername.length < (320 - messages[messages.length-1].length)) { // <---------------------------ERROR - MAKE SURE THE EXTRA 15 ARE ACCOUNTED FOR
+      messages[messages.length-1] += createUsernameChangeText(usernames.prevUsername, usernames.newUsername) // 15 chars w/out usernames
     } else {
-      messages.push(`@${unames.prevUsername} changed to ${unames.newUsername}\n`);
+      messages.push(createUsernameChangeText(usernames.prevUsername, usernames.newUsername));
     };
   });
   return messages;
@@ -135,7 +149,7 @@ const cronScheduleFunction = async () => {
 
   // Create and cast messages
   if (differingUsernameUsers.length > 0) {
-    
+
     // Create a list of messages containing the usernames - 320 total characters per cast
     const messages = createMessages(differingUsernameUsers);
 
