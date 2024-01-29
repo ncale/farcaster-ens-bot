@@ -163,6 +163,15 @@ const cronScheduleFunction = async () => {
       });
     }
   }
+
+  // Retrieve the current leaderboard for use tomorrow
+  await duneClient
+    .refresh(CURRENT_LEADERBOARD_QUERY_ID)
+    .then((executionResult) => {
+      let oldData = executionResult.result?.rows;
+    })
+    .catch((err) => {console.log(err)})
+  return;
 };
 
 
