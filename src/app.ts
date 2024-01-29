@@ -56,17 +56,17 @@ const publishCast = async (msg: string) => {
  * @param userList - The array of usernames. Each item is an object containing prevUsername and newUsername
  * @returns 
  */
-const createMessages = (userList: Array<object>) => {
+const createMessages = (userList: UsernameHistory[]): string[] => {
   // Initialize messages array
-  let messages: string[];
+  let messages: string[] = [];
   // Function to create the first line of text
-  const createFirstLineText = (numUsers: number) => {`${numUsers} new user${numUsers > 1 ? "s have" : " has"} joined the .eth family!\n`} // 40-43 chars; 35 plain text, 4-6 changing language, 1-2 num chars
+  const createFirstLineText = (numUsers: number): string => {return `${numUsers} new user${numUsers > 1 ? "s have" : " has"} joined the .eth family!\n`} // 40-43 chars; 35 plain text, 4-6 changing language, 1-2 num chars
   // Write first line
   messages.push(createFirstLineText(userList.length));
   // Function to create the text for each username change
-  const createUsernameChangeText = (prevU: string, newU: string) => {return `@${prevU} changed to ${newU}\n`}; // 15 chars w/out usernames
+  const createUsernameChangeText = (prevU: string, newU: string): string => {return `@${prevU} changed to ${newU}\n`}; // 15 chars w/out usernames
   // Write a line for each user in the list
-  userList.forEach((usernames: object) => {
+  userList.forEach((usernames: UsernameHistory): void => {
     // If the line will push the message char count past Farcaster's limit of 320, push it to a new cast
     if ((usernames.prevUsername.length + usernames.newUsername.length + 15) < (320 - messages[messages.length-1].length)) {
       messages[messages.length-1] += createUsernameChangeText(usernames.prevUsername, usernames.newUsername)
@@ -79,34 +79,18 @@ const createMessages = (userList: Array<object>) => {
 
 
 
+type User = {
+  fid: number,
+  username: string,
+  total_followers?: string
+}
 
+type UsernameHistory = {
+  prevUsername: string,
+  newUsername: string
+}
 
-
-/**
- * oldData format:
- * [
- *  {
- *    fid:
- *    username:
- *    total_followers:
- *  }
- * ]
- */
-
-
-/**
- * oldDataChecker format:
- * [
- *  {
- *    fid:
- *    username:
- *  }
- * ]
- */
-
-
-
-let leaderboardData: Array<object> = [];
+let leaderboardData: User[];
 
 const cronScheduleFunction = async () => {
   // If first time running, then query dune for the current leaderboard and return tomorrow
@@ -122,7 +106,7 @@ const cronScheduleFunction = async () => {
 
   // Create a string of FIDs in a list format (ex. '(x, y, z)') to be passed to dune as a parameter
   let fidList = "(";
-  leaderboardData.forEach((user) => {
+  leaderboardData.forEach((user: User): void => {
     fidList += `${user.fid}, `;
   });
   fidList += ")";
@@ -136,27 +120,27 @@ const cronScheduleFunction = async () => {
   await duneClient
     .refresh(USERNAME_LOOKUP_QUERY_ID, parameters)
     .then((executionResult) => {
-      let updatedUsernames = executionResult.result?.rows;
+      let updatedUsernames: User[] = executionResult.result?.rows;
     })
     .catch((err) => {console.log(err)})
 
   // Check which usernames are different ... this code will not work if Dune / postgres rearranges the returned query order
-  let differingUsernameUsers: Array<object> = [];
-  leaderboardData.forEach((user, i) => {
+  let differingUsernames: UsernameHistory[];
+  leaderboardData.forEach((user: User, i: number): void => {
     // Check if the username is the same. If not, save to var
     if (user.username != updatedUsernames[i].username) {
-      differingUsernameUsers.push({prevUsername: user.username, newUsername: updatedUsernames[i].username})
+      differingUsernames.push({prevUsername: user.username, newUsername: updatedUsernames[i].username})
     }
   });
 
   // Create and cast messages
-  if (differingUsernameUsers.length > 0) {
+  if (differingUsernames.length > 0) {
     // Create a list of messages containing the usernames - 320 total characters per cast
-    const messages = createMessages(differingUsernameUsers);
+    const messages = createMessages(differingUsernames);
     // Cast the messages
     publishCast(messages[0])
     if (messages.length > 1) {
-      messages.forEach((message) => {
+      messages.forEach((message: string): void => {
         publishCast(message) // this function needs to reply to the one previous
       });
     }
