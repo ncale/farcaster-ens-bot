@@ -62,12 +62,12 @@ const createMessages = (userList: Array<object>) => {
   // Write first line
   messages.push(`${userList.length} new username${userList.length > 1 ? "s have" : " has"} joined the .eth family!\n`); // 44-47 chars ; 39 plain text, 4-6 changing language, 1-2 num chars
   // Function to create the username change string
-  const createUsernameChangeText = (prevU: string, newU: string) => {return `@${prevU} changed to ${newU}\n`};
+  const createUsernameChangeText = (prevU: string, newU: string) => {return `@${prevU} changed to ${newU}\n`}; // 15 chars w/out usernames
   // Write a line for each user in the list
   userList.forEach((usernames: object) => {
     // If the line will push the message char count past Farcaster's limit of 320, push it to a new cast
-    if (usernames.prevUsername.length + usernames.newUsername.length < (320 - messages[messages.length-1].length)) { // <---------------------------ERROR - MAKE SURE THE EXTRA 15 ARE ACCOUNTED FOR
-      messages[messages.length-1] += createUsernameChangeText(usernames.prevUsername, usernames.newUsername) // 15 chars w/out usernames
+    if ((usernames.prevUsername.length + usernames.newUsername.length + 15) < (320 - messages[messages.length-1].length)) {
+      messages[messages.length-1] += createUsernameChangeText(usernames.prevUsername, usernames.newUsername)
     } else {
       messages.push(createUsernameChangeText(usernames.prevUsername, usernames.newUsername));
     };
