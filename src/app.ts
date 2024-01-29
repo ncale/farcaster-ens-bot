@@ -36,11 +36,24 @@ if (!DUNE_API_KEY) {
 /**
  * Function to publish a message (cast) using neynarClient.
  * @param msg - The message to be published.
+ * @param replyHash - The hash of the parent cast if this is a reply
  */
-const publishCast = async (msg: string) => {
+const publishCast = async (msg: string, replyHash: string = "") => {
   try {
     // Using the neynarClient to publish the cast.
-    await neynarClient.publishCast(SIGNER_UUID, msg);
+    if (replyHash) {
+      await neynarClient
+        .publishCast(SIGNER_UUID, msg, {replyTo: replyHash})
+        .then(response => {
+          console.log("Published Cast:", response);
+        });
+    } else {
+      await neynarClient
+        .publishCast(SIGNER_UUID, msg)
+        .then(response => {
+          console.log("Published Cast:", response);
+        });
+    };
     console.log("Cast published successfully");
   } catch (err) {
     // Error handling, checking if it's an API response error.
@@ -139,7 +152,8 @@ const cronScheduleFunction = async () => {
     // Create a list of messages containing the usernames - 320 total characters per cast
     const messages = createMessages(differingUsernames);
     // Cast the messages
-    publishCast(messages[0])
+    await publishCast(messages[0])
+    // <- need to get the hash of the original cast so it can reply here if needed
     if (messages.length > 1) {
       messages.forEach((message: string): void => {
         publishCast(message) // this function needs to reply to the one previous
