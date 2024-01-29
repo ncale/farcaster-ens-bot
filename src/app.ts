@@ -59,9 +59,11 @@ const publishCast = async (msg: string) => {
 const createMessages = (userList: Array<object>) => {
   // Initialize messages array
   let messages: string[];
+  // Function to create the first line of text
+  const createFirstLineText = (numUsers: number) => {`${numUsers} new user${numUsers > 1 ? "s have" : " has"} joined the .eth family!\n`} // 40-43 chars; 35 plain text, 4-6 changing language, 1-2 num chars
   // Write first line
-  messages.push(`${userList.length} new username${userList.length > 1 ? "s have" : " has"} joined the .eth family!\n`); // 44-47 chars ; 39 plain text, 4-6 changing language, 1-2 num chars
-  // Function to create the username change string
+  messages.push(createFirstLineText(userList.length));
+  // Function to create the text for each username change
   const createUsernameChangeText = (prevU: string, newU: string) => {return `@${prevU} changed to ${newU}\n`}; // 15 chars w/out usernames
   // Write a line for each user in the list
   userList.forEach((usernames: object) => {
