@@ -34,6 +34,20 @@ if (!DUNE_API_KEY) {
 
 
 /**
+ * Function to return the results of a dune query
+ * @param queryID - The published dune query ID to be called
+ */
+const queryDune = async (queryID: number) => {
+  await duneClient
+    .refresh(CURRENT_LEADERBOARD_QUERY_ID)
+    .then((executionResult) => {
+      return executionResult.result?.rows;
+    })
+    .catch((err) => {console.log(err)})
+};
+
+
+/**
  * Function to publish a message (cast) using neynarClient.
  * @param msg - The message to be published.
  * @param replyHash - The hash of the parent cast if this is a reply
@@ -153,7 +167,7 @@ const cronScheduleFunction = async () => {
     const messages = createMessages(differingUsernames);
     // Cast the messages
     await publishCast(messages[0])
-    // <- need to get the hash of the original cast so it can reply here if needed
+          // <- need to get the hash of the original cast so it can reply here if needed
     if (messages.length > 1) {
       messages.forEach((message: string): void => {
         publishCast(message) // this function needs to reply to the one previous
