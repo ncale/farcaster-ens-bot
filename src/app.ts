@@ -37,13 +37,20 @@ if (!DUNE_API_KEY) {
  * Function to return the results of a dune query
  * @param queryID - The published dune query ID to be called
  */
-const queryDune = async (queryID: number) => {
-  await duneClient
-    .refresh(CURRENT_LEADERBOARD_QUERY_ID)
-    .then((executionResult) => {
-      return executionResult.result?.rows;
-    })
-    .catch((err) => {console.log(err)})
+const queryDune = async (queryID: number, parameters: QueryParameter[] = []) => {
+  try {
+    if (parameters) {
+      return await duneClient
+        .refresh(queryID, parameters)
+        .then((executionResult) => executionResult.result?.rows)
+    } else {
+      return await duneClient
+        .refresh(queryID)
+        .then((executionResult) => executionResult.result?.rows)
+    }
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 
@@ -123,12 +130,7 @@ let leaderboardData: User[];
 const cronScheduleFunction = async () => {
   // If first time running, then query dune for the current leaderboard and return tomorrow
   if (!leaderboardData) {
-    await duneClient
-      .refresh(CURRENT_LEADERBOARD_QUERY_ID)
-      .then((executionResult) => {
-        leaderboardData = executionResult.result?.rows;
-      })
-      .catch((err) => {console.log(err)})
+    leaderboardData = queryDune(CURRENT_LEADERBOARD_QUERY_ID);
     return;
   }
 
@@ -145,12 +147,7 @@ const cronScheduleFunction = async () => {
   ];
 
   // Using that parameter, query the current usernames
-  await duneClient
-    .refresh(USERNAME_LOOKUP_QUERY_ID, parameters)
-    .then((executionResult) => {
-      let updatedUsernames: User[] = executionResult.result?.rows;
-    })
-    .catch((err) => {console.log(err)})
+  let updatedUsernames: User[] = queryDune(USERNAME_LOOKUP_QUERY_ID, parameters);
 
   // Check which usernames are different ... this code will not work if Dune / postgres rearranges the returned query order
   let differingUsernames: UsernameHistory[];
@@ -176,13 +173,7 @@ const cronScheduleFunction = async () => {
   }
 
   // Retrieve the current leaderboard for use tomorrow
-  await duneClient
-    .refresh(CURRENT_LEADERBOARD_QUERY_ID)
-    .then((executionResult) => {
-      let leaderboardData = executionResult.result?.rows;
-    })
-    .catch((err) => {console.log(err)})
-  return;
+  leaderboardData = queryDune(CURRENT_LEADERBOARD_QUERY_ID);
 };
 
 
