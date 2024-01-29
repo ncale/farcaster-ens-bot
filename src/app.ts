@@ -117,12 +117,18 @@ type UsernameHistory = {
   newUsername: string
 }
 
-let leaderboardData: User[];
+const getCurrentLeaderboard = async () => {
+  let leaderboardData = await queryDune(CURRENT_LEADERBOARD_QUERY_ID);
+  return leaderboardData;
+}
+
+let leaderboardData = getCurrentLeaderboard();
+let loopNum = 1;
 
 const cronScheduleFunction = async () => {
-  // If first time running, then query dune for the current leaderboard and return tomorrow
-  if (!leaderboardData) {
-    let leaderboardData = await queryDune(CURRENT_LEADERBOARD_QUERY_ID);
+  // If first time running, return tomorrow
+  if (loopNum == 1) {
+    loopNum += 1;
     return;
   }
 
@@ -165,7 +171,8 @@ const cronScheduleFunction = async () => {
   }
 
   // Retrieve the current leaderboard for use tomorrow
-  let leaderboardData = await queryDune(CURRENT_LEADERBOARD_QUERY_ID);
+  leaderboardData = await getCurrentLeaderboard();
+  loopNum += 1;
 };
 
 
