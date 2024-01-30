@@ -6,39 +6,32 @@ import {
   PUBLISH_CAST_TIME,
   SIGNER_UUID,
   TIME_ZONE,
-  NEYNAR_API_KEY,
-  DUNE_API_KEY,
   FARCASTER_BOT_MNEMONIC,
 } from "./config";
 import {
   UsernameHistory
-} from "./appTypes"
+} from "./types"
 import { isApiErrorResponse } from "@neynar/nodejs-sdk";
 
+// Validating necessary environment variables or configurations.
+if (!FARCASTER_BOT_MNEMONIC) {
+    throw new Error("FARCASTER_BOT_MNEMONIC is not defined");
+}
+if (!SIGNER_UUID) {
+    throw new Error("SIGNER_UUID is not defined");
+}
 
 // Assign Dune query IDs
 const CURRENT_LEADERBOARD_QUERY_ID = 3383049;
 const USERNAME_LOOKUP_QUERY_ID = 3386538;
 
-
-// Validating necessary environment variables or configurations.
-if (!FARCASTER_BOT_MNEMONIC) {
-  throw new Error("FARCASTER_BOT_MNEMONIC is not defined");
-}
-if (!SIGNER_UUID) {
-  throw new Error("SIGNER_UUID is not defined");
-}
-if (!NEYNAR_API_KEY) {
-  throw new Error("NEYNAR_API_KEY is not defined");
-}
-if (!DUNE_API_KEY) {
-  throw new Error("DUNE_API_KEY is not defined");
-}
-
-
 /**
- * Function to return the results of a dune query
- * @param queryID - The published dune query ID to be called
+ * Function to return the results of a given dune query
+ * 
+ * @param {number} queryID - The published dune query ID to be called
+ * @param {QueryParameter[]} parameters - An array of parameters to be passed to the function if applicable
+ * @returns {Record<string, unknown>[] | undefined} A promise that resolves to an array of 
+ * objects containing fid, username, and optionally total_followers
  */
 const queryDune = async (queryID: number, parameters: QueryParameter[] = []): Promise<Record<string, unknown>[] | undefined> => {
   try {
@@ -54,11 +47,11 @@ const queryDune = async (queryID: number, parameters: QueryParameter[] = []): Pr
   }
 };
 
-
 /**
  * Function to publish a message (cast) using neynarClient.
- * @param msg - The message to be published.
- * @param replyHash - The hash of the parent cast if this is a reply
+ * 
+ * @param {string} msg - The message to be published.
+ * @param {string} replyHash - The hash of the parent cast if this is a reply
  */
 const publishCast = async (msg: string, replyHash: string = "") => {
   try {
@@ -79,11 +72,12 @@ const publishCast = async (msg: string, replyHash: string = "") => {
   }
 };
 
-
 /**
- * Function to create and return a list of messages. The number of messages depends on how many users change their username, so as not to exceed the Farcaster char limit.
- * @param userList - The array of usernames. Each item is an object containing prevUsername and newUsername
- * @returns 
+ * Function to create and return a list of messages. The number of messages depends 
+ * on how many users change their username, so as not to exceed the Farcaster char limit.
+ * 
+ * @param {UsernameHistory[]} userList - The array of objects containing previous and new usernames
+ * @returns {string[]} An array of strings to be cast, each one as a reply to the previous
  */
 const createMessages = (userList: UsernameHistory[]): string[] => {
   // Initialize messages array
@@ -107,67 +101,111 @@ const createMessages = (userList: UsernameHistory[]): string[] => {
   return messages;
 };
 
-
-
-
-
+/**
+ * Function to retrieve to current 150 most followed Farcaster accounts
+ * 
+ * @returns {Record<string, unknown>[] | undefined} A promise that resolves to an 
+ * array of objects containing fid, username, and optionally total_followers
+ */
 const getCurrentLeaderboard = async (): Promise<Record<string, unknown>[] | undefined> => {
   let rows = await queryDune(CURRENT_LEADERBOARD_QUERY_ID);
   return rows;
 }
 
+/**
+ * Function to create a string formatted as a list to be passed to the Dune api as a query parameter
+ * 
+ * @returns {string} a list of Farcaster IDs to be passed to Dune as a parameter
+ * @example passing an array of [10, 11, 12] will return '(10, 11, 12)'
+ */
+const createFidListString = (): string => {
+  let fidList = "(";
+  leaderboardData!.forEach((user: Record<string, unknown>): void => {
+    fidList += `${user.fid}, `;
+  });
+  fidList += ")";
+  return fidList;
+}
 
+/**
+ * Function to check the original data against the new query to validate which Farcaster usernames have 
+ * changed in the past day.
+ * 
+ * @param {Record<string, unknown>[] | undefined} updatedUsernames - array of objects containing fid and username
+ * @returns {UsernameHistory[]} array of objects containing a previous username and a new username
+ */
+const checkDifferingUsernames = (updatedUsernames: Record<string, unknown>[] | undefined):UsernameHistory[] => {
+  let differingUsernames: UsernameHistory[] = [];
+  leaderboardData!.forEach((user: Record<string, unknown>, i: number): void => {
+    // Check if the username is the same. If different, save to var
+    let prevUsername = user.username;
+    let newUsername = updatedUsernames![i].username;
+    if (prevUsername != newUsername) {
+      differingUsernames.push({"prevUsername": prevUsername, "newUsername": newUsername})
+    };
+  });
+  return differingUsernames;
+};
 
+/**
+ * Async function to cast the array of messages. Each message should reply to the previous.
+ * 
+ * @param {string[]} messages - array of the messages to be cast
+ * @returns <<<<<-------NEEDS TO RETURN SOMETHING OR CODE LATER NEEDS TO BE CHANGED
+ */
+const castDailyMessages = async (messages: string[]) => {
+  // Cast the first message
+  let response = await publishCast(messages[0])
+  console.log("Main cast published successfully\n", response)
+        // <- need to get the hash of the original cast so it can reply here if needed
+  if (messages.length > 1) {
+    messages.forEach((message: string): void => {
+      let response = await publishCast(message) // this function needs to reply to the one previous
+    });
+  };
+};
+
+/**
+ * Async function of the bot's primary behavior. Uses the global leaderboardData variable to query 
+ * current usernames, check the names that are different, and cast the differences
+ * 
+ */
 const runBot = async () => {
   try {
-    // Create a string of FIDs in a list format (ex. '(x, y, z)') to be passed to dune as a parameter
-    let fidList = "(";
-    leaderboardData!.forEach((user: Record<string, unknown>): void => {
-      fidList += `${user.fid}, `;
-    });
-    fidList += ")";
-
-    // Put parameter into cowprotocol dune client format
+    // Query the top leaderboard's current usernames
+    const fidList: string = createFidListString();
     const parameters = [
       QueryParameter.text("fid_list_parameter", fidList)
     ];
-
-    // Using that parameter, query the current usernames
     let updatedUsernames: Record<string, unknown>[] | undefined = await queryDune(USERNAME_LOOKUP_QUERY_ID, parameters);
 
     // Check which usernames are different ... this code will not work if Dune / postgres rearranges the returned query order
-    let differingUsernames: UsernameHistory[] = [];
-    leaderboardData!.forEach((user: Record<string, unknown>, i: number): void => {
-      // Check if the username is the same. If not, save to var
-      let prevUsername: unknown = user.username;
-      let newUsername: unknown = updatedUsernames![i].username;
-      if (prevUsername != newUsername) {
-        differingUsernames.push({"prevUsername": prevUsername, "newUsername": newUsername})
-      }
-    });
+    let differingUsernames = checkDifferingUsernames(updatedUsernames)
 
     // Create and cast messages
     if (differingUsernames.length > 0) {
       // Create a list of messages containing the usernames - 320 total characters per cast
       const messages = createMessages(differingUsernames);
-      // Cast the messages
-      let response = await publishCast(messages[0])
-            // <- need to get the hash of the original cast so it can reply here if needed
-      if (messages.length > 1) {
-        messages.forEach((message: string): void => {
-          let response = await publishCast(message) // this function needs to reply to the one previous
-        });
-      }
-    }
+      await castDailyMessages(messages);
+    };
   } catch (err) {
-
-  }
+    console.log(err);
+  };
 };
 
+/**
+ * Async function to be run daily by the cron job. Runs the bot if it has leaderboardData available
+ * to check.
+ * 
+ */
 const cronFunc = async () => {
-  // Skip if first time running
-  if (loopNum > 1) {
-    // Await to ensure the previous day's leaderboard values are used
+  if (loopNum == 1) {
+    // Initial cast
+    publishCast(
+      `gm! I bring updates of farcaster users' usage of fully decentralized domains (via ens!). Look 
+      forward to updates of popular farcaster accounts that switch their original fnames to a .eth name!`
+    );
+  } else {
     await runBot();
   };
   // Overwrite the previous day's leaderboard values. Retrieve the current leaderboard for tomorrow.
@@ -175,11 +213,9 @@ const cronFunc = async () => {
   loopNum += 1;
 }
 
-// Initial cast
-publishCast(
-  `gm! I bring updates of farcaster users' usage of fully decentralized domains (via ens!). Look 
-  forward to updates of popular farcaster accounts that switch their original fnames to a .eth name!`
-);
+
+
+
 
 // Extracting hour and minute from the PUBLISH_CAST_TIME configuration.
 const [hour, minute] = PUBLISH_CAST_TIME.split(":");

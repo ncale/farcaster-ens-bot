@@ -1,7 +1,7 @@
 import { FARCASTER_BOT_MNEMONIC } from "./config";
-import neynarClient from "./neynarClient";
+import neynarClient from "./clients/neynarClient";
 import { mnemonicToAccount } from "viem/accounts";
-import { viemPublicClient } from "./viemClient";
+import { viemPublicClient } from "./clients/viemClient";
 import { keyGatewayAbi } from "./abi/keyGateway";
 import { encodeAbiParameters } from "viem";
 import { SignedKeyRequestMetadataABI } from "./abi/SignedKeyRequestMetadata";
