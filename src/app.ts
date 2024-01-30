@@ -11,7 +11,6 @@ import {
   FARCASTER_BOT_MNEMONIC,
 } from "./config";
 import {
-  User,
   UsernameHistory
 } from "./appTypes"
 import { isApiErrorResponse } from "@neynar/nodejs-sdk";
@@ -94,7 +93,7 @@ const createMessages = (userList: UsernameHistory[]): string[] => {
   // Write first line
   messages.push(createFirstLineText(userList.length));
   // Function to create the text for each username change
-  const createUsernameChangeText = (prevU: string, newU: string): string => {return `@${prevU} changed to ${newU}\n`}; // 15 chars w/out usernames
+  const createUsernameChangeText = (prevU: string | unknown, newU: string | unknown): string => {return `@${prevU} changed to ${newU}\n`}; // 15 chars w/out usernames
   // Write a line for each user in the list
   userList.forEach((usernames: UsernameHistory): void => {
     // If the line makes the message char count greater than 320 (Farcaster's limit), then it will push to a new cast
@@ -117,60 +116,62 @@ const getCurrentLeaderboard = async (): Promise<Record<string, unknown>[] | unde
   return rows;
 }
 
-let leaderboardData = getCurrentLeaderboard();
-let loopNum = 1;
+
 
 const runBot = async () => {
-  // If first time running, return tomorrow
-  if (loopNum == 1) {
-    loopNum += 1;
-    return;
-  }
+  try {
+    // Create a string of FIDs in a list format (ex. '(x, y, z)') to be passed to dune as a parameter
+    let fidList = "(";
+    leaderboardData!.forEach((user: Record<string, unknown>): void => {
+      fidList += `${user.fid}, `;
+    });
+    fidList += ")";
 
-  // Create a string of FIDs in a list format (ex. '(x, y, z)') to be passed to dune as a parameter
-  let fidList = "(";
-  leaderboardData.forEach((user: User): void => {
-    fidList += `${user.fid}, `;
-  });
-  fidList += ")";
+    // Put parameter into cowprotocol dune client format
+    const parameters = [
+      QueryParameter.text("fid_list_parameter", fidList)
+    ];
 
-  // Put parameter into cowprotocol dune client format
-  const parameters = [
-    QueryParameter.text("fid_list_parameter", fidList)
-  ];
+    // Using that parameter, query the current usernames
+    let updatedUsernames: Record<string, unknown>[] | undefined = await queryDune(USERNAME_LOOKUP_QUERY_ID, parameters);
 
-  // Using that parameter, query the current usernames
-  let updatedUsernames: Record<string, unknown>[] | undefined = await queryDune(USERNAME_LOOKUP_QUERY_ID, parameters);
+    // Check which usernames are different ... this code will not work if Dune / postgres rearranges the returned query order
+    let differingUsernames: UsernameHistory[] = [];
+    leaderboardData!.forEach((user: Record<string, unknown>, i: number): void => {
+      // Check if the username is the same. If not, save to var
+      let prevUsername: unknown = user.username;
+      let newUsername: unknown = updatedUsernames![i].username;
+      if (prevUsername != newUsername) {
+        differingUsernames.push({"prevUsername": prevUsername, "newUsername": newUsername})
+      }
+    });
 
-  // Check which usernames are different ... this code will not work if Dune / postgres rearranges the returned query order
-  let differingUsernames: UsernameHistory[];
-  leaderboardData.forEach((user: User, i: number): void => {
-    // Check if the username is the same. If not, save to var
-    if (user.username != updatedUsernames[i].username) {
-      differingUsernames.push({prevUsername: user.username, newUsername: updatedUsernames[i].username})
+    // Create and cast messages
+    if (differingUsernames.length > 0) {
+      // Create a list of messages containing the usernames - 320 total characters per cast
+      const messages = createMessages(differingUsernames);
+      // Cast the messages
+      let response = await publishCast(messages[0])
+            // <- need to get the hash of the original cast so it can reply here if needed
+      if (messages.length > 1) {
+        messages.forEach((message: string): void => {
+          let response = await publishCast(message) // this function needs to reply to the one previous
+        });
+      }
     }
-  });
+  } catch (err) {
 
-  // Create and cast messages
-  if (differingUsernames.length > 0) {
-    // Create a list of messages containing the usernames - 320 total characters per cast
-    const messages = createMessages(differingUsernames);
-    // Cast the messages
-    let response = await publishCast(messages[0])
-          // <- need to get the hash of the original cast so it can reply here if needed
-    if (messages.length > 1) {
-      messages.forEach((message: string): void => {
-        let response = await publishCast(message) // this function needs to reply to the one previous
-      });
-    }
   }
 };
 
 const cronFunc = async () => {
-  // Await to ensure yesterday's leaderboard values are used
-  await runBot();
-  // Overwrite yesterday's leaderboard values. Retrieve the current leaderboard for tomorrow.
-  leaderboardData = getCurrentLeaderboard();
+  // Skip if first time running
+  if (loopNum > 1) {
+    // Await to ensure the previous day's leaderboard values are used
+    await runBot();
+  };
+  // Overwrite the previous day's leaderboard values. Retrieve the current leaderboard for tomorrow.
+  leaderboardData = await getCurrentLeaderboard();
   loopNum += 1;
 }
 
@@ -183,9 +184,13 @@ publishCast(
 // Extracting hour and minute from the PUBLISH_CAST_TIME configuration.
 const [hour, minute] = PUBLISH_CAST_TIME.split(":");
 
-// Scheduling a cron job to publish a message at a specific time every day.
+// Initialize cron loop counter and the Dune leaderboard data
+let loopNum = 1;
+let leaderboardData: Record<string, unknown>[] | undefined;
+
+// Schedule cron job
 cron.schedule(
-  `${minute} ${hour} * * *`, // Cron time format
+  `${minute} ${hour} * * *`,
   cronFunc,
   {
     scheduled: true, // Ensure the job is scheduled.
