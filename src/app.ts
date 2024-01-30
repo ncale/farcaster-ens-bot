@@ -23,7 +23,7 @@ if (!SIGNER_UUID) {
 }
 
 // Assign Dune query IDs
-const CURRENT_LEADERBOARD_QUERY_ID = 3383049;
+const CURRENT_LEADERBOARD_QUERY_ID = 3380826;
 const USERNAME_LOOKUP_QUERY_ID = 3386538;
 
 /**
@@ -188,7 +188,7 @@ const runBot = async () => {
     ];
     let updatedUsernames: Record<string, unknown>[] | undefined = await queryDune(USERNAME_LOOKUP_QUERY_ID, parameters);
 
-    // Check which usernames are different ... this code will not work if Dune / postgres rearranges the returned query order
+    // Check which usernames are different
     let differingUsernames = checkDifferingUsernames(updatedUsernames)
 
     // Create and cast messages
@@ -208,18 +208,17 @@ const runBot = async () => {
  * 
  */
 const cronFunc = async () => {
-  if (loopNum == 1) {
+  if (leaderboardData) {
+    await runBot();
+  } else {
     // Initial cast
-    publishCast(
+    await publishCast(
       `gm! I bring updates of farcaster users' usage of fully decentralized domains (via ens!). Look 
       forward to updates of popular farcaster accounts that switch their original fnames to a .eth name!`
     );
-  } else {
-    await runBot();
   };
   // Overwrite the previous day's leaderboard values. Retrieve the current leaderboard for tomorrow.
   leaderboardData = await getCurrentLeaderboard();
-  loopNum += 1;
 }
 
 
@@ -229,8 +228,7 @@ const cronFunc = async () => {
 // Extracting hour and minute from the PUBLISH_CAST_TIME configuration.
 const [hour, minute] = PUBLISH_CAST_TIME.split(":");
 
-// Initialize cron loop counter and the Dune leaderboard data
-let loopNum = 1;
+// Initialize Dune leaderboard data
 let leaderboardData: Record<string, unknown>[] | undefined;
 
 // Schedule cron job
