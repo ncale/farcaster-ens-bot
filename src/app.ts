@@ -120,7 +120,7 @@ const getCurrentLeaderboard = async (): Promise<Record<string, unknown>[] | unde
 let leaderboardData = getCurrentLeaderboard();
 let loopNum = 1;
 
-const cronScheduleFunction = async () => {
+const runBot = async () => {
   // If first time running, return tomorrow
   if (loopNum == 1) {
     loopNum += 1;
@@ -164,12 +164,15 @@ const cronScheduleFunction = async () => {
       });
     }
   }
-
-  // Retrieve the current leaderboard for use tomorrow
-  leaderboardData = await getCurrentLeaderboard();
-  loopNum += 1;
 };
 
+const cronFunc = async () => {
+  // Await to ensure yesterday's leaderboard values are used
+  await runBot();
+  // Overwrite yesterday's leaderboard values. Retrieve the current leaderboard for tomorrow.
+  leaderboardData = getCurrentLeaderboard();
+  loopNum += 1;
+}
 
 // Initial cast
 publishCast(
@@ -183,7 +186,7 @@ const [hour, minute] = PUBLISH_CAST_TIME.split(":");
 // Scheduling a cron job to publish a message at a specific time every day.
 cron.schedule(
   `${minute} ${hour} * * *`, // Cron time format
-  cronScheduleFunction,
+  cronFunc,
   {
     scheduled: true, // Ensure the job is scheduled.
     timezone: TIME_ZONE, // Set the timezone for the schedule.
