@@ -10,6 +10,10 @@ import {
   DUNE_API_KEY,
   FARCASTER_BOT_MNEMONIC,
 } from "./config";
+import {
+  User,
+  UsernameHistory
+} from "./appTypes"
 import { isApiErrorResponse } from "@neynar/nodejs-sdk";
 
 
@@ -37,14 +41,14 @@ if (!DUNE_API_KEY) {
  * Function to return the results of a dune query
  * @param queryID - The published dune query ID to be called
  */
-const queryDune = async (queryID: number, parameters: QueryParameter[] = []) => {
+const queryDune = async (queryID: number, parameters: QueryParameter[] = []): Promise<Record<string, unknown>[] | undefined> => {
   try {
     if (parameters) {
-      let executionResult = await duneClient.refresh(queryID, parameters);
-      return executionResult.result?.rows;
+      let response = await duneClient.refresh(queryID, parameters);
+      return response.result?.rows;
     } else {
-      let executionResult = await duneClient.refresh(queryID);
-      return executionResult.result?.rows;
+      let response = await duneClient.refresh(queryID);
+      return response.result?.rows;
     };
   } catch (err) {
     console.log(err);
@@ -106,20 +110,11 @@ const createMessages = (userList: UsernameHistory[]): string[] => {
 
 
 
-type User = {
-  fid: number,
-  username: string,
-  total_followers?: string
-}
 
-type UsernameHistory = {
-  prevUsername: string,
-  newUsername: string
-}
 
-const getCurrentLeaderboard = async () => {
-  let leaderboardData = await queryDune(CURRENT_LEADERBOARD_QUERY_ID);
-  return leaderboardData;
+const getCurrentLeaderboard = async (): Promise<Record<string, unknown>[] | undefined> => {
+  let rows = await queryDune(CURRENT_LEADERBOARD_QUERY_ID);
+  return rows;
 }
 
 let leaderboardData = getCurrentLeaderboard();
@@ -145,7 +140,7 @@ const cronScheduleFunction = async () => {
   ];
 
   // Using that parameter, query the current usernames
-  let updatedUsernames: User[] = await queryDune(USERNAME_LOOKUP_QUERY_ID, parameters);
+  let updatedUsernames: Record<string, unknown>[] | undefined = await queryDune(USERNAME_LOOKUP_QUERY_ID, parameters);
 
   // Check which usernames are different ... this code will not work if Dune / postgres rearranges the returned query order
   let differingUsernames: UsernameHistory[];
