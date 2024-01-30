@@ -1,6 +1,6 @@
 import cron from "node-cron";
-import neynarClient from "./neynarClient";
-import duneClient from "./duneClient";
+import neynarClient from "./clients/neynarClient";
+import duneClient from "./clients/duneClient";
 import { QueryParameter } from "@cowprotocol/ts-dune-client";
 import {
   PUBLISH_CAST_TIME,
@@ -12,6 +12,7 @@ import {
   UsernameHistory
 } from "./types"
 import { isApiErrorResponse } from "@neynar/nodejs-sdk";
+import { PostCastResponseCast } from "@neynar/nodejs-sdk/build/neynar-api/neynar-v2-api";
 
 // Validating necessary environment variables or configurations.
 if (!FARCASTER_BOT_MNEMONIC) {
@@ -53,23 +54,49 @@ const queryDune = async (queryID: number, parameters: QueryParameter[] = []): Pr
  * @param {string} msg - The message to be published.
  * @param {string} replyHash - The hash of the parent cast if this is a reply
  */
-const publishCast = async (msg: string, replyHash: string = "") => {
+const publishCast = async (msg: string, replyHash: string = ""): Promise<PostCastResponseCast | undefined> => {
   try {
     // Using the neynarClient to publish the cast.
     if (replyHash) {
-      let response = await neynarClient.publishCast(SIGNER_UUID, msg, {replyTo: replyHash});
+      let response: PostCastResponseCast = await neynarClient.publishCast(SIGNER_UUID, msg, {replyTo: replyHash});
       console.log("Published Cast:", response);
+      return response;
     } else {
-      let response = await neynarClient.publishCast(SIGNER_UUID, msg);
+      let response: PostCastResponseCast = await neynarClient.publishCast(SIGNER_UUID, msg);
       console.log("Published Cast:", response);
+      return response;
     };
-    console.log("Cast published successfully");
   } catch (err) {
     // Error handling, checking if it's an API response error.
     if (isApiErrorResponse(err)) {
       console.log(err.response.data);
     } else console.log(err);
   }
+};
+
+/**
+ * Async function to cast the array of messages. Each message should reply to the previous.
+ * 
+ * @param {string[]} messages - array of the messages to be cast
+ * @returns <<<<<-------NEEDS TO RETURN SOMETHING OR CODE LATER NEEDS TO BE CHANGED
+ */
+const castDailyMessages = async (messages: string[]) => {
+  // Cast the first message
+  let response = await publishCast(messages[0])
+  console.log("Main cast published successfully\n", response)
+  // If more than one message, cast the rest as replies
+  if (messages.length > 1) {
+    // Save the hash value of the first message
+    let hashes: string[] = [response!.hash];
+    // Remove the first message
+    messages.shift();
+    // Iterate through
+    for (const i in messages) {
+      // Cast as reply to previous hash
+      let response = await publishCast(messages[i], hashes[i])
+      hashes.push(response!.hash);
+    };
+  };
 };
 
 /**
@@ -145,24 +172,6 @@ const checkDifferingUsernames = (updatedUsernames: Record<string, unknown>[] | u
     };
   });
   return differingUsernames;
-};
-
-/**
- * Async function to cast the array of messages. Each message should reply to the previous.
- * 
- * @param {string[]} messages - array of the messages to be cast
- * @returns <<<<<-------NEEDS TO RETURN SOMETHING OR CODE LATER NEEDS TO BE CHANGED
- */
-const castDailyMessages = async (messages: string[]) => {
-  // Cast the first message
-  let response = await publishCast(messages[0])
-  console.log("Main cast published successfully\n", response)
-        // <- need to get the hash of the original cast so it can reply here if needed
-  if (messages.length > 1) {
-    messages.forEach((message: string): void => {
-      let response = await publishCast(message) // this function needs to reply to the one previous
-    });
-  };
 };
 
 /**
