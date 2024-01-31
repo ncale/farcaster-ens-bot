@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "A bot that will cast when popular Farcaster users switch their Farcaster username from their default fname to an owned .eth name.",
   "main": "./dist/app.js",
-  "type": "module",
   "scripts": {
     "watch": "tsc --watch",
     "build": "rm -rf dist && tsc",
