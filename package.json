@@ -1,22 +1,21 @@
 {
-  "name": "gm_bot",
+  "name": "farcaster-ens-bot",
   "version": "1.0.0",
-  "description": "A bot that will cast a 'gm 🪐' message in Warpcast at scheduled time everyday (As long as system is online)",
+  "description": "A bot that will cast when popular Farcaster users switch their Farcaster username from their default fname to an owned .eth name.",
   "main": "./dist/app.js",
   "type": "module",
   "scripts": {
     "watch": "tsc --watch",
     "build": "rm -rf dist && tsc",
-    "start": "npm run build && pm2 start ecosystem.config.cjs",
+    "start": "yarn run build && node ./dist/app.js",
     "get-approved-signer": "ts-node getApprovedSigner.ts"
   },
-  "author": "Neynar",
+  "author": "Nick Brodeur",
   "license": "MIT",
   "dependencies": {
     "@cowprotocol/ts-dune-client": "^0.0.2",
     "@neynar/nodejs-sdk": "^0.11.3",
     "@types/node": "^20.9.0",
-    "chatgpt": "^5.2.5",
     "dotenv": "^16.3.1",
     "node-cron": "^3.0.3",
     "typescript": "^5.3.3",
