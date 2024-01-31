@@ -4,9 +4,10 @@ import duneClient from "./clients/duneClient";
 import { QueryParameter } from "@cowprotocol/ts-dune-client";
 import {
   PUBLISH_CAST_TIME,
-  SIGNER_UUID,
   TIME_ZONE,
-  FARCASTER_BOT_MNEMONIC,
+  SIGNER_UUID,
+  NEYNAR_API_KEY,
+  DUNE_API_KEY
 } from "./config";
 import {
   UsernameHistory
@@ -14,12 +15,14 @@ import {
 import { isApiErrorResponse } from "@neynar/nodejs-sdk";
 import { PostCastResponseCast } from "@neynar/nodejs-sdk/build/neynar-api/neynar-v2-api";
 
-// Validating necessary environment variables or configurations.
-if (!FARCASTER_BOT_MNEMONIC) {
-    throw new Error("FARCASTER_BOT_MNEMONIC is not defined");
-}
 if (!SIGNER_UUID) {
-    throw new Error("SIGNER_UUID is not defined");
+  throw new Error("SIGNER_UUID is not defined");
+}
+if (!NEYNAR_API_KEY) {
+  throw new Error("SIGNER_UUID is not defined");
+}
+if (!DUNE_API_KEY) {
+  throw new Error("SIGNER_UUID is not defined");
 }
 
 // Assign Dune query IDs
