@@ -117,7 +117,7 @@ const createMessages = (userList: UsernameHistory[]): string[] => {
   // Write first line
   messages.push(createFirstLineText(userList.length));
   // Function to create the text for each username change
-  const createUsernameChangeText = (prevU: string | unknown, newU: string | unknown): string => {return `@${prevU} changed to ${newU}\n`}; // 15 chars w/out usernames
+  const createUsernameChangeText = (prevU: string | unknown, newU: string | unknown): string => {return `${prevU} changed to ${newU}\n`}; // 14 chars w/out usernames
   // Write a line for each user in the list
   userList.forEach((usernames: UsernameHistory): void => {
     // If the line makes the message char count greater than 320 (Farcaster's limit), then it will push to a new cast
@@ -216,8 +216,9 @@ const cronFunc = async () => {
   } else {
     // Initial cast
     await publishCast(
-      `gm! I bring updates of farcaster users' usage of fully decentralized domains (via ens!). Look 
-      forward to updates of popular farcaster accounts that switch their original fnames to a .eth name!`
+      `gm! I bring updates of farcaster users' usage of fully decentralized domains. Look 
+      forward to updates of popular farcaster accounts that switch their fnames (boring, 
+      off-chain versions of an ens domain) to a .eth name (awesome, on-chain domains)!`
     );
   };
   // Overwrite the previous day's leaderboard values. Retrieve the current leaderboard for tomorrow.
